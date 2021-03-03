@@ -1,0 +1,11 @@
+index:
+   path: /lucky
+   controller: App\Controller\LuckyController::number
+
+task:
+   path: /task
+   controller: App\Controller\TaskController::new
+
+reviews:
+   path: /reviews
+   controller: App\Controller\ReviewsController::index

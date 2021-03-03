@@ -1,0 +1,44 @@
+{% extends 'base.html.twig' %}
+
+{% form_theme form 'bootstrap_4_layout.html.twig' %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+{% endblock %}
+
+{% block body %}
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-9 pt-4">
+                <h1 class="mb-3">Reviews</h1>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th scope="col">Rating</th>
+                            <th scope="col">Text</th>
+                            <th scope="col">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for review in reviews %}
+                        <tr>
+                            <td>{{ review.rating }}</td>
+                            <td>{{ review.reviewText }}</td>
+                            <td>{{ review.reviewCreatedOnDate }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-3 pt-4" style="border-left: 1px solid #dee2e6">
+                <h1 class="">Filter</h1>
+                <hr>
+                {% if form is defined %}
+                    {{ form_start(form) }}
+                    {{ form_widget(form) }}
+                    {{ form_end(form) }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
