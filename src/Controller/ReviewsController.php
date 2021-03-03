@@ -9,58 +9,6 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 class ReviewsController extends AbstractController
 {
-    private function fetchReviews()
-    {
-        $url = getenv('REVIEWS_URL');
-
-        $cURLConnection = curl_init();
-    
-        curl_setopt($cURLConnection, CURLOPT_URL, $url);
-        curl_setopt($cURLConnection, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($cURLConnection, CURLOPT_HTTPHEADER, array(
-            'Authorization: Bearer ' . getenv('REVIEWS_AUTH')
-        ));
-    
-        $response = curl_exec($cURLConnection);
-        curl_close($cURLConnection);
-    
-        return json_decode($response)->reviews;
-    }
-
-    private function sortReviews($reviews, $orderRating, $orderDate)
-    {
-        $filteredReviews = [];
-        $ratingOptions = ['1', '2', '3', '4', '5'];
-        foreach ($ratingOptions as $key => $option) {
-            $filteredReviews[$option] = [];
-        }
-
-        if ($orderRating) {
-            $filteredReviews = array_reverse($filteredReviews, true);
-        }
-        foreach ($reviews as $review) {
-            array_push($filteredReviews[$review->rating], $review);
-        }
-
-        foreach ($filteredReviews as $key => $review) {
-            usort($filteredReviews[$key], function($a, $b) use ($orderDate) {
-                if ($orderDate) {
-                    return strtotime($b->reviewCreatedOnDate) - strtotime($a->reviewCreatedOnDate);
-                }
-                return strtotime($a->reviewCreatedOnDate) - strtotime($b->reviewCreatedOnDate);
-            });
-        }
-
-        $result = [];
-        foreach ($filteredReviews as $key => $review) {
-            foreach ($review as $index => $value) {
-                array_push($result, $review[$index]);
-            }
-        }
-
-        return $result;
-    }
-
     public function index(Request $request)
     {
         $data = [];
@@ -150,5 +98,57 @@ class ReviewsController extends AbstractController
         $data['form'] = $form->createView();
             
         return $this->render('Reviews/index.html.twig', $data);
+    }
+
+    private function fetchReviews()
+    {
+        $url = getenv('REVIEWS_URL');
+
+        $cURLConnection = curl_init();
+    
+        curl_setopt($cURLConnection, CURLOPT_URL, $url);
+        curl_setopt($cURLConnection, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($cURLConnection, CURLOPT_HTTPHEADER, array(
+            'Authorization: Bearer ' . getenv('REVIEWS_AUTH')
+        ));
+    
+        $response = curl_exec($cURLConnection);
+        curl_close($cURLConnection);
+    
+        return json_decode($response)->reviews;
+    }
+
+    private function sortReviews($reviews, $orderRating, $orderDate)
+    {
+        $filteredReviews = [];
+        $ratingOptions = ['1', '2', '3', '4', '5'];
+        foreach ($ratingOptions as $key => $option) {
+            $filteredReviews[$option] = [];
+        }
+
+        if ($orderRating) {
+            $filteredReviews = array_reverse($filteredReviews, true);
+        }
+        foreach ($reviews as $review) {
+            array_push($filteredReviews[$review->rating], $review);
+        }
+
+        foreach ($filteredReviews as $key => $review) {
+            usort($filteredReviews[$key], function($a, $b) use ($orderDate) {
+                if ($orderDate) {
+                    return strtotime($b->reviewCreatedOnDate) - strtotime($a->reviewCreatedOnDate);
+                }
+                return strtotime($a->reviewCreatedOnDate) - strtotime($b->reviewCreatedOnDate);
+            });
+        }
+
+        $result = [];
+        foreach ($filteredReviews as $key => $review) {
+            foreach ($review as $index => $value) {
+                array_push($result, $review[$index]);
+            }
+        }
+
+        return $result;
     }
 }
