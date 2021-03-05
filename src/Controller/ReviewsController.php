@@ -1,75 +1,18 @@
 <?php
 namespace App\Controller;
 
-use App\Entity\ReviewsFilter;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Form\Extension\Core\Type\SubmitType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use App\Service\ReviewsService;
 
 class ReviewsController extends AbstractController
 {
-
-    private $reviewsUrl;
-
-    private $reviewsAuth;
-
-    public function __construct(string $reviewsUrl, string $reviewsAuth)
-    {
-        $this->reviewsUrl = $reviewsUrl;
-        $this->reviewsAuth = $reviewsAuth;
-    }
-
-    public function index(Request $request)
+    public function index(Request $request, ReviewsService $reviewsService)
     {
         $data = [];
-        $reviews = $this->fetchReviews();
+        $reviews = $reviewsService->fetchReviews();
         
-        $filter = new ReviewsFilter();
-        $form = $this->createFormBuilder($filter)
-            ->add('orderRating', ChoiceType::class, [
-                'choices' => [
-                    'Highest First' => true,
-                    'Lowest First' => false
-                ],
-                'expanded' => false,
-                'multiple' => false
-            ])
-            ->add('minRating', ChoiceType::class, [
-                'choices' => [
-                    '1' => 1,
-                    '2' => 2,
-                    '3' => 3,
-                    '4' => 4,
-                    '5' => 5
-                ],
-                'expanded' => false,
-                'multiple' => false
-            ])
-            ->add('orderDate', ChoiceType::class, [
-                'choices' => [
-                    'Newest First' => true,
-                    'Oldest First' => false
-                ],
-                'expanded' => false,
-                'multiple' => false
-            ])
-            ->add('textPriority', ChoiceType::class, [
-                'choices' => [
-                    'Yes' => true,
-                    'No' => false
-                ],
-                'expanded' => false,
-                'multiple' => false
-            ])
-            ->add('save', SubmitType::class, [
-                'label' => 'Apply filter',
-                'attr' => [
-                    'class' => 'float-right btn-primary'
-                ]
-            ])
-            ->getForm();
-
+        $form = $reviewsService->createReviewsFilterForm();
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -94,12 +37,12 @@ class ReviewsController extends AbstractController
                     $review->reviewText ? array_push($reviewsWithText, $review) : array_push($reviewsWithoutText, $review);
                 }
 
-                $arr1 = $this->sortReviews($reviewsWithText, $orderRating, $orderDate);
-                $arr2 = $this->sortReviews($reviewsWithoutText, $orderRating, $orderDate);
+                $arr1 = $reviewsService->sortReviews($reviewsWithText, $orderRating, $orderDate);
+                $arr2 = $reviewsService->sortReviews($reviewsWithoutText, $orderRating, $orderDate);
 
                 $reviews = array_merge($arr1, $arr2);
             } else {
-                $arr1 = $this->sortReviews($reviews, $orderRating, $orderDate);
+                $arr1 = $reviewsService->sortReviews($reviews, $orderRating, $orderDate);
                 $reviews = $arr1;
             }
         }
@@ -108,55 +51,5 @@ class ReviewsController extends AbstractController
         $data['form'] = $form->createView();
             
         return $this->render('Reviews/index.html.twig', $data);
-    }
-
-    private function fetchReviews()
-    {
-
-        $cURLConnection = curl_init();
-        curl_setopt($cURLConnection, CURLOPT_URL, $this->reviewsUrl);
-        curl_setopt($cURLConnection, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($cURLConnection, CURLOPT_HTTPHEADER, array(
-            'Authorization: Bearer ' . $this->reviewsAuth
-        ));
-    
-        $response = curl_exec($cURLConnection);
-        curl_close($cURLConnection);
-    
-        return json_decode($response)->reviews;
-    }
-
-    private function sortReviews($reviews, $orderRating, $orderDate)
-    {
-        $filteredReviews = [];
-        $ratingOptions = ['1', '2', '3', '4', '5'];
-        foreach ($ratingOptions as $key => $option) {
-            $filteredReviews[$option] = [];
-        }
-
-        if ($orderRating) {
-            $filteredReviews = array_reverse($filteredReviews, true);
-        }
-        foreach ($reviews as $review) {
-            array_push($filteredReviews[$review->rating], $review);
-        }
-
-        foreach ($filteredReviews as $key => $review) {
-            usort($filteredReviews[$key], function($a, $b) use ($orderDate) {
-                if ($orderDate) {
-                    return strtotime($b->reviewCreatedOnDate) - strtotime($a->reviewCreatedOnDate);
-                }
-                return strtotime($a->reviewCreatedOnDate) - strtotime($b->reviewCreatedOnDate);
-            });
-        }
-
-        $result = [];
-        foreach ($filteredReviews as $key => $review) {
-            foreach ($review as $index => $value) {
-                array_push($result, $review[$index]);
-            }
-        }
-
-        return $result;
     }
 }
