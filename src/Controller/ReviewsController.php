@@ -9,6 +9,17 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 class ReviewsController extends AbstractController
 {
+
+    private $reviewsUrl;
+
+    private $reviewsAuth;
+
+    public function __construct(string $reviewsUrl, string $reviewsAuth)
+    {
+        $this->reviewsUrl = $reviewsUrl;
+        $this->reviewsAuth = $reviewsAuth;
+    }
+
     public function index(Request $request)
     {
         $data = [];
@@ -60,7 +71,6 @@ class ReviewsController extends AbstractController
             ->getForm();
 
         $form->handleRequest($request);
-        $minRating;
 
         if ($form->isSubmitted() && $form->isValid()) {
             $filter = $form->getData();
@@ -102,14 +112,12 @@ class ReviewsController extends AbstractController
 
     private function fetchReviews()
     {
-        $url = getenv('REVIEWS_URL');
 
         $cURLConnection = curl_init();
-    
-        curl_setopt($cURLConnection, CURLOPT_URL, $url);
+        curl_setopt($cURLConnection, CURLOPT_URL, $this->reviewsUrl);
         curl_setopt($cURLConnection, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($cURLConnection, CURLOPT_HTTPHEADER, array(
-            'Authorization: Bearer ' . getenv('REVIEWS_AUTH')
+            'Authorization: Bearer ' . $this->reviewsAuth
         ));
     
         $response = curl_exec($cURLConnection);

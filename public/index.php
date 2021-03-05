@@ -3,7 +3,6 @@
 use App\Kernel;
 use Symfony\Component\ErrorHandler\Debug;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\Dotenv\Dotenv;
 
 require dirname(__DIR__).'/config/bootstrap.php';
 
@@ -21,8 +20,6 @@ if ($trustedHosts = $_SERVER['TRUSTED_HOSTS'] ?? false) {
     Request::setTrustedHosts([$trustedHosts]);
 }
 
-$dotenv = new Dotenv();
-$dotenv->load(dirname(__DIR__).'/.env.local');
 $kernel = new Kernel($_SERVER['APP_ENV'], (bool) $_SERVER['APP_DEBUG']);
 $request = Request::createFromGlobals();
 $response = $kernel->handle($request);
